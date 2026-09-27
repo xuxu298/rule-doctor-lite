@@ -1,0 +1,2 @@
+2026/09/26 13:09:01 wazuh-analysisd: WARNING: (7617): Signature ID '5715' was not found and will be ignored in the 'if_sid' option of rule '910010'.
+2026/09/26 13:09:01 wazuh-analysisd: WARNING: (7619): Empty 'if_sid' value. Rule '910010' will be ignored.

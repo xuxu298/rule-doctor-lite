@@ -1,0 +1,3 @@
+<group name="rule-doctor-test,">
+  <rule id="910011" level="6"><if_sid>57150</if_sid><user>deploy</user><description>EXPECT DROPPED-AT-LOAD (parent id does not exist)</description></rule>
+</group>

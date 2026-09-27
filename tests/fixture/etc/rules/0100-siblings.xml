@@ -1,0 +1,4 @@
+<group name="rule-doctor-test,">
+  <rule id="910002" level="12"><if_sid>5715</if_sid><user>root</user><description>sibling level 12: root login</description></rule>
+  <rule id="910004" level="8"><if_sid>5715</if_sid><srcip>10.0.0.0/8</srcip><description>sibling level 8, loaded first: from 10.0.0.0/8</description></rule>
+</group>

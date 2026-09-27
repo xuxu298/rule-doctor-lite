@@ -1,0 +1,5 @@
+<group name="rule-doctor-test,">
+  <rule id="910001" level="5"><if_sid>5715</if_sid><srcip>10.0.0.0/8</srcip><description>EXPECT SHADOWED (matches the same events as 910002/910004)</description></rule>
+  <rule id="910003" level="8"><if_sid>5715</if_sid><match>port 7777</match><description>EXPECT SHADOWED by 910004 (same level, loaded later)</description></rule>
+  <rule id="910006" level="7"><if_sid>5715</if_sid><user>oracle</user><description>EXPECT NO-MATCH (candidate that matches nothing)</description></rule>
+</group>

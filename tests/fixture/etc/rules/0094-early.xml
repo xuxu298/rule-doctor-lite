@@ -1,0 +1,3 @@
+<group name="rule-doctor-test,">
+  <rule id="910010" level="10"><if_sid>5715</if_sid><user>svc_backup</user><description>EXPECT DROPPED-AT-LOAD (file sorts before 0095-sshd_rules.xml)</description></rule>
+</group>

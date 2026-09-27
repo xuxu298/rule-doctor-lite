@@ -1,0 +1,4 @@
+<group name="syslog,sshd,">
+  <rule id="5700" level="0" noalert="1"><decoded_as>sshd</decoded_as><description>SSHD messages grouped.</description></rule>
+  <rule id="5715" level="3"><if_sid>5700</if_sid><match>^Accepted|authenticated.$</match><description>sshd: authentication success.</description></rule>
+</group>
