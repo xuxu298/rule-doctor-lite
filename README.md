@@ -10,6 +10,13 @@ sudo python3 rule-doctor-lite.py                 # on the manager, reads /var/os
 python3 rule-doctor-lite.py --ossec-dir ./copy   # or on a copy of /var/ossec
 ```
 
+Or from PyPI (same file, with a `rule-doctor-lite` command):
+
+```bash
+pipx install rule-doctor-lite                    # or pip install rule-doctor-lite inside a venv
+sudo "$(command -v rule-doctor-lite)"             # on the manager, reads /var/ossec
+```
+
 Manager in docker? Copy the four things it reads, then point `--ossec-dir` at the copy:
 
 ```bash
