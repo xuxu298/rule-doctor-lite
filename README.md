@@ -5,7 +5,7 @@ A free, read-only check for Wazuh 4.x. It lists every custom rule that did not f
 One Python 3 file, standard library only. It reads files; it changes nothing on your manager and sends nothing anywhere.
 
 ```bash
-curl -sO https://raw.githubusercontent.com/xuxu298/rule-doctor-lite/main/rule-doctor-lite.py
+curl -sLO https://github.com/xuxu298/rule-doctor-lite/releases/latest/download/rule-doctor-lite.py
 sudo python3 rule-doctor-lite.py                 # on the manager, reads /var/ossec
 python3 rule-doctor-lite.py --ossec-dir ./copy   # or on a copy of /var/ossec
 ```
