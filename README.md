@@ -77,6 +77,7 @@ Step-by-step notes for what Lite points at, each with a one-minute check you can
 - [Wazuh rule shadowed by a sibling rule](https://atkvn.com/fix-rule-shadowed-by-sibling.html?src=gh)
 - [mapper_parsing_exception: the alert is in alerts.json but never reaches the dashboard](https://atkvn.com/fix-mapper-parsing-exception.html?src=gh)
 - [Wazuh "Cannot read 'srcip' from data"](https://atkvn.com/fix-cannot-read-srcip-from-data.html?src=gh)
+- [Wazuh rule with `<hostname>` matches in logtest but never fires for agent events](https://atkvn.com/fix-hostname-rule-never-fires-for-agent-events.html?src=gh)
 
 ## Full version and done-for-you fixes
 
