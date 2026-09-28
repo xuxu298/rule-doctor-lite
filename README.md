@@ -66,6 +66,16 @@ The prediction matters because `ossec.log` can miss warnings: analysisd buffers 
 - `SHADOW-CANDIDATE` needs a replay to confirm or clear. Lite does not replay.
 - Only the alerts files you give it count. Rotated or compressed alert logs are not read unless you pass them with `--alerts`.
 
+## Guides
+
+Step-by-step notes for what Lite points at, each with a one-minute check you can run yourself (measured on Wazuh 4.14.7):
+
+- [Wazuh rule dropped at load: 7617 and 7619, while `wazuh-analysisd -t` exits 0](https://atkvn.com/fix-rule-dropped-at-load-7617-7619.html?src=gh)
+- [Wazuh rule matches in wazuh-logtest but never fires in production](https://atkvn.com/fix-rule-passes-logtest-but-never-fires.html?src=gh)
+- [Wazuh rule shadowed by a sibling rule](https://atkvn.com/fix-rule-shadowed-by-sibling.html?src=gh)
+- [mapper_parsing_exception: the alert is in alerts.json but never reaches the dashboard](https://atkvn.com/fix-mapper-parsing-exception.html?src=gh)
+- [Wazuh "Cannot read 'srcip' from data"](https://atkvn.com/fix-cannot-read-srcip-from-data.html?src=gh)
+
 ## Full version and done-for-you fixes
 
 - **ATK Rule Doctor** (USD 490 per cluster per year) replays the real events behind every `SHADOW-CANDIDATE` through a throwaway manager of your version to confirm or clear it, and fixes alerts the indexer rejects with `mapper_parsing_exception`: https://vct.atkvn.com/rule-doctor.html
