@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+build/
+dist/
+*.egg-info/
+rule_doctor_lite.py

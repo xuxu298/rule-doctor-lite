@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rule-doctor-lite"
+version = "0.2.1"
+description = "Find custom Wazuh rules that never fire, including rules dropped at load (7617/7619). Read-only, standard library only."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.6"
+authors = [{ name = "ATK New Technology", email = "dongnx@atkvn.com" }]
+keywords = ["wazuh", "siem", "detection-engineering", "custom-rules", "ossec", "7617", "7619", "if_sid"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: System Administrators",
+  "Intended Audience :: Information Technology",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+  "Topic :: System :: Monitoring",
+]
+
+[project.urls]
+Homepage = "https://vct.atkvn.com/rule-doctor.html#lite"
+Source = "https://github.com/xuxu298/rule-doctor-lite"
+"Fix notes" = "https://atkvn.com/fix-rule-dropped-at-load-7617-7619.html"
+
+[project.scripts]
+rule-doctor-lite = "rule_doctor_lite:main"
+
+[tool.setuptools]
+# rule-doctor-lite.py stays the one file people curl; the build copies it to an importable name.
+py-modules = ["rule_doctor_lite"]

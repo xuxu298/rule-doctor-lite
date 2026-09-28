@@ -1,0 +1,31 @@
+name: publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # PyPI trusted publishing, no stored token
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check versions match
+        run: |
+          v_py=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
+          v_sc=$(grep -m1 '^VERSION' rule-doctor-lite.py | cut -d'"' -f2)
+          echo "pyproject=$v_py script=$v_sc"
+          test "$v_py" = "$v_sc"
+      - name: Build
+        run: |
+          cp rule-doctor-lite.py rule_doctor_lite.py
+          python -m pip install --upgrade build
+          python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
