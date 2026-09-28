@@ -1,0 +1,4 @@
+<group name="rule-doctor-test,">
+  <rule id="910012" level="10"><if_sid>910010</if_sid><description>EXPECT DROPPED-AT-LOAD (parent 910010 is itself dropped)</description></rule>
+  <rule id="910013" level="12"><if_sid>910012</if_sid><description>EXPECT DROPPED-AT-LOAD (grandchild of a dropped rule)</description></rule>
+</group>

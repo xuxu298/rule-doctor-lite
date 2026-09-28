@@ -8,6 +8,8 @@ and gives the most likely reason:
   DROPPED-AT-LOAD        Wazuh threw the rule away while loading it (its if_sid parent was not
                          loaded yet, or does not exist). The manager still starts and
                          `wazuh-analysisd -t` still exits 0; only ossec.log says so (7617/7619).
+                         Chains are followed: a child of a dropped rule is dropped too. Reads
+                         if_sid only, not if_matched_sid or if_group.
   SHADOW-CANDIDATE       a sibling that Wazuh evaluates first did fire. Only a candidate: it
                          proves the sibling matched something, not that this rule would have
                          matched the same event. Confirming it needs a replay (full version).
@@ -20,7 +22,7 @@ order across ruleset/rules and etc/rules, then order inside the file).
 """
 import argparse, glob, json, os, re, sys
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 URL_FULL = "https://vct.atkvn.com/rule-doctor.html"
 CONTACT = "dongnx@atkvn.com"
 
@@ -103,26 +105,39 @@ def read_ossec_log(paths):
     return out
 
 
-def static_drops(rules, stock_read):
-    """Custom rules whose if_sid parents are ALL unavailable at load time (Wazuh ignores the rule)."""
+def static_drops(rules, stock_read, known=None):
+    """Custom rules whose if_sid parents are ALL unavailable at load time (Wazuh ignores the rule).
+
+    Follows chains: a parent that is itself dropped is not there when its children load, so they
+    are dropped too (Wazuh logs 7617/7619 for each of them). `known` holds drops already read from
+    ossec.log, so a chain is also followed from a drop that only the log shows. Repeats until
+    nothing changes.
+    """
+    known = dict(known or {})
     out = {}
-    for rid, r in rules.items():
-        if not r["custom"] or not r["parents"]:
-            continue
-        why = []
-        for p in r["parents"]:
-            if p in rules:
-                if rules[p]["load_order"] > r["load_order"]:
-                    why.append("parent %s is in %s, which loads after %s" % (p, rules[p]["file"], r["file"]))
+    changed = True
+    while changed:
+        changed = False
+        for rid, r in rules.items():
+            if not r["custom"] or not r["parents"] or rid in out or rid in known:
+                continue
+            why = []
+            for p in r["parents"]:
+                if p in out or p in known:
+                    why.append("parent %s is itself dropped at load" % p)
+                elif p in rules:
+                    if rules[p]["load_order"] > r["load_order"]:
+                        why.append("parent %s is in %s, which loads after %s" % (p, rules[p]["file"], r["file"]))
+                    else:
+                        break  # at least one parent is loaded already: the rule survives
+                elif stock_read:
+                    why.append("parent %s is not defined anywhere" % p)
                 else:
-                    break  # at least one parent is loaded already: the rule survives
-            elif stock_read:
-                why.append("parent %s is not defined anywhere" % p)
+                    break  # stock ruleset not read: cannot tell
             else:
-                break  # stock ruleset not read: cannot tell
-        else:
-            if why:
-                out[rid] = "predicted: " + "; ".join(why)
+                if why:
+                    out[rid] = "predicted: " + "; ".join(why)
+                    changed = True
     return out
 
 
@@ -186,8 +201,9 @@ def main(argv=None):
 
     rules, n_stock = read_ruleset(os.path.join(root, "ruleset/rules"), os.path.join(root, "etc/rules"))
     fired, (first, last) = read_alerts(alerts)
-    dropped = static_drops(rules, n_stock > 0)
-    dropped.update(read_ossec_log(logs))  # the log, when present, beats the prediction
+    logged = read_ossec_log(logs)
+    dropped = static_drops(rules, n_stock > 0, logged)
+    dropped.update(logged)  # the log, when present, beats the prediction
     res, loss = classify(rules, fired, dropped)
 
     n_custom = sum(1 for r in rules.values() if r["custom"])

@@ -22,9 +22,9 @@ docker cp $C:/var/ossec/logs/ossec.log copy/logs/ && docker cp $C:/var/ossec/log
 
 | label | meaning |
 |---|---|
-| `DROPPED-AT-LOAD` | Wazuh ignored the rule at load time: its `if_sid` parent was not loaded yet (the file name sorts before the parent's file) or does not exist. The manager still starts and `wazuh-analysisd -t` still exits 0; only `ossec.log` shows warnings 7617/7619. Read from `ossec.log` when present, otherwise predicted from the load order. |
+| `DROPPED-AT-LOAD` | Wazuh ignored the rule at load time: its `if_sid` parent was not loaded yet (the file name sorts before the parent's file) or does not exist. The manager still starts and `wazuh-analysisd -t` still exits 0; only `ossec.log` shows warnings 7617/7619. Read from `ossec.log` when present, otherwise predicted from the load order. Chains are followed: a rule whose parent was itself dropped is dropped too, however deep. |
 | `SHADOW-CANDIDATE` | a sibling that Wazuh evaluates first (higher level, or same level and loaded earlier) did fire. **A candidate, not a finding:** it proves the sibling matched something, not that your rule would have matched the same event. |
-| `NEVER-REACHES-MANAGER` | no related rule fired and the manager logged event loss (rules 203/204). |
+| `NEVER-REACHES-MANAGER` | no related rule fired and the manager logged event loss (rules 203/204). Only loss that raised 203/204 is seen: an agent with its client buffer off, or a manager dropping events at its EPS limit, raises neither, and Lite then says `NO-MATCH`. |
 | `NO-MATCH` | a related rule fired but this one did not, or nothing suggests event loss. |
 
 The shadowed / never-reaches-the-manager / no-match split is Kislley Rodrigues's.
@@ -45,11 +45,24 @@ and, with `ossec.log` withheld, the same verdict from the load order alone:
 100080   level 10  0094-test.xml   DROPPED-AT-LOAD   predicted: parent 5715 is in 0095-sshd_rules.xml, which loads after 0094-test.xml
 ```
 
+### Chains (0.2.0, 28/09/2026)
+
+Same image. Anchor `910010` on `if_sid 5715` in `0094-early.xml`, child `910012` on `if_sid 910010` and grandchild `910013` on `if_sid 910012` in `0500-chain.xml`. `wazuh-analysisd -t` exited 0; `ossec.log` had 7617 + 7619 for all three, each naming the rule above it as the missing parent. Lite, with `ossec.log` withheld:
+
+```
+910010   level 10  0094-early.xml   DROPPED-AT-LOAD   predicted: parent 5715 is in 0095-sshd_rules.xml, which loads after 0094-early.xml
+910012   level 10  0500-chain.xml   DROPPED-AT-LOAD   predicted: parent 910010 is itself dropped at load
+910013   level 12  0500-chain.xml   DROPPED-AT-LOAD   predicted: parent 910012 is itself dropped at load
+```
+
+The prediction matters because `ossec.log` can miss warnings: analysisd buffers the warnings of each rules file in a list capped at 50 (`ERRORLIST_MAXSIZE`) and flushes it after the file, so a file that produces more than 50 warnings loses the oldest ones (`src/analysisd/analysisd.c` L708-750 on v4.14.7).
+
 `tests/run.sh` runs the fixture checks without docker.
 
 ## Limits
 
-- Wazuh 4.x rule syntax. `if_group`, `if_matched_sid` and `if_matched_group` parents are not followed yet.
+- Wazuh 4.x rule syntax. Only `if_sid` parents are read; `if_group`, `if_matched_sid` and `if_matched_group` are not followed yet.
+- `NEVER-REACHES-MANAGER` only sees loss that raised rule 203 or 204 (see the table above).
 - `SHADOW-CANDIDATE` needs a replay to confirm or clear. Lite does not replay.
 - Only the alerts files you give it count. Rotated or compressed alert logs are not read unless you pass them with `--alerts`.
 
