@@ -20,9 +20,9 @@ The three-way split (shadowed / never reaches the manager / no match) is Kislley
 Sibling precedence (Wazuh 4.x): higher level first; equal level, the one loaded first (file name
 order across ruleset/rules and etc/rules, then order inside the file).
 """
-import argparse, glob, json, os, re, sys
+import argparse, glob, gzip, json, os, re, sys, time
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 URL_FULL = "https://vct.atkvn.com/rule-doctor.html"
 CONTACT = "dongnx@atkvn.com"
 
@@ -62,11 +62,26 @@ def read_ruleset(stock_dir, custom_dir):
     return rules, n_stock
 
 
+def _open(p):
+    """Rotated Wazuh logs are gzip-compressed (.gz); read them the same way as plain ones."""
+    if p.endswith(".gz"):
+        return gzip.open(p, "rt", encoding="utf-8", errors="replace")
+    return open(p, encoding="utf-8", errors="replace")
+
+
+def default_alerts(root, days):
+    """Current alerts.json plus the rotated files (plain or .gz) modified in the last `days` days."""
+    cur = glob.glob(os.path.join(root, "logs/alerts/*.json"))
+    old = glob.glob(os.path.join(root, "logs/alerts/*/*/ossec-alerts-*.json*"))
+    cutoff = time.time() - days * 86400
+    return sorted(set(cur) | {f for f in old if os.path.getmtime(f) >= cutoff})
+
+
 def read_alerts(paths):
     fired, first, last = set(), None, None
     for p in paths:
         try:
-            fh = open(p, encoding="utf-8", errors="replace")
+            fh = _open(p)
         except OSError:
             continue
         with fh:
@@ -85,24 +100,40 @@ def read_alerts(paths):
     return fired, (first, last)
 
 
+LOADED = re.compile(r"wazuh-analysisd: INFO: Total rules enabled")
+
+
 def read_ossec_log(paths):
-    """rule id -> reason, from the load-time warnings in ossec.log."""
-    out = {}
-    for p in paths:
+    """rule id -> reason, from the load-time warnings of the LATEST rule load in ossec.log.
+
+    Each load writes its 7617/7619 warnings and then "Total rules enabled". Only the last
+    completed load counts, so a warning from a load before you fixed the rule is not reported.
+    Lines from `wazuh-analysisd -t` (wazuh-testrule) are ignored: they describe a test, not the
+    running manager. Files are read oldest first.
+    """
+    last, pending = None, {}
+    for p in sorted(paths, key=lambda f: os.path.getmtime(f) if os.path.exists(f) else 0):
         try:
-            fh = open(p, encoding="utf-8", errors="replace")
+            fh = _open(p)
         except OSError:
             continue
         with fh:
             for line in fh:
+                if "wazuh-testrule" in line:
+                    continue
+                if LOADED.search(line):
+                    last, pending = pending, {}
+                    continue
                 m = W7617.search(line)
                 if m:
-                    out[m.group(2)] = "ossec.log 7617: parent %s not found when the rule loaded" % m.group(1)
+                    pending[m.group(2)] = "ossec.log 7617: parent %s not found when the rule loaded" % m.group(1)
                     continue
                 m = W7619.search(line)
-                if m and m.group(1) not in out:
-                    out[m.group(1)] = "ossec.log 7619: empty if_sid, rule ignored"
-    return out
+                if m and m.group(1) not in pending:
+                    pending[m.group(1)] = "ossec.log 7619: empty if_sid, rule ignored"
+    if pending:  # warnings after the last "Total rules enabled" belong to the newest load
+        return pending
+    return last or {}
 
 
 def static_drops(rules, stock_read, known=None):
@@ -188,7 +219,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="rule-doctor-lite", description="ATK Rule Doctor Lite: why do my custom Wazuh rules never fire?")
     ap.add_argument("--version", action="version", version="rule-doctor-lite " + VERSION)
     ap.add_argument("--ossec-dir", default="/var/ossec", help="Wazuh install dir (default /var/ossec)")
-    ap.add_argument("--alerts", action="append", help="alerts file(s) or glob(s); default <ossec-dir>/logs/alerts/*.json")
+    ap.add_argument("--alerts", action="append", help="alerts file(s) or glob(s), plain or .gz; default: current alerts.json plus rotated files of the last --days days")
+    ap.add_argument("--days", type=int, default=7, help="how many days of rotated alerts to read by default (default 7)")
     ap.add_argument("--ossec-log", action="append", help="ossec.log file(s) or glob(s); default <ossec-dir>/logs/ossec.log")
     ap.add_argument("--json", help="also write a JSON report here")
     a = ap.parse_args(argv)
@@ -196,7 +228,7 @@ def main(argv=None):
     root = a.ossec_dir
     if not os.path.isdir(root):
         sys.exit("rule-doctor-lite: %s not found; pass --ossec-dir" % root)
-    alerts = sorted(f for pat in (a.alerts or [os.path.join(root, "logs/alerts/*.json")]) for f in glob.glob(pat))
+    alerts = sorted(f for pat in a.alerts for f in glob.glob(pat)) if a.alerts else default_alerts(root, a.days)
     logs = sorted(f for pat in (a.ossec_log or [os.path.join(root, "logs/ossec.log")]) for f in glob.glob(pat))
 
     rules, n_stock = read_ruleset(os.path.join(root, "ruleset/rules"), os.path.join(root, "etc/rules"))

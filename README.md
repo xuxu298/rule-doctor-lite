@@ -31,6 +31,8 @@ The shadowed / never-reaches-the-manager / no-match split is Kislley Rodrigues's
 
 Every result is printed with the time window it was measured over. A rule written for a quarterly event is not dead after a day.
 
+**What it reads by default** (0.2.1): the current `logs/alerts/alerts.json` plus the rotated alert files of the last 7 days (`logs/alerts/<year>/<Mon>/ossec-alerts-<dd>.json`, plain or `.gz`, as Wazuh writes them); change the window with `--days N`. From `ossec.log` it takes the 7617/7619 warnings of the **latest** rule load only (the block before the last `Total rules enabled`), so a rule you already fixed is not reported from an older load, and lines from `wazuh-analysisd -t` are ignored.
+
 ## Tested on a real manager
 
 `wazuh/wazuh-manager:4.14.7`, 27/09/2026. Two identical custom rules on `if_sid 5715`, one in `0094-test.xml` (sorts before the stock `0095-sshd_rules.xml`), one in `0500-ok.xml`. A real `sshd` "Accepted password" event fired `100081` from `0500-ok.xml`; `100080` in `0094-test.xml` never fired. Rule Doctor Lite reported:
@@ -64,7 +66,7 @@ The prediction matters because `ossec.log` can miss warnings: analysisd buffers 
 - Wazuh 4.x rule syntax. Only `if_sid` parents are read; `if_group`, `if_matched_sid` and `if_matched_group` are not followed yet.
 - `NEVER-REACHES-MANAGER` only sees loss that raised rule 203 or 204 (see the table above).
 - `SHADOW-CANDIDATE` needs a replay to confirm or clear. Lite does not replay.
-- Only the alerts files you give it count. Rotated or compressed alert logs are not read unless you pass them with `--alerts`.
+- "Never fired" means never fired in the alerts it read (7 days by default). Older alerts need `--days` or `--alerts`.
 
 ## Guides
 
