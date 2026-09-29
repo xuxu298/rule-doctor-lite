@@ -29,7 +29,7 @@ docker cp $C:/var/ossec/logs/ossec.log copy/logs/ && docker cp $C:/var/ossec/log
 
 | label | meaning |
 |---|---|
-| `DROPPED-AT-LOAD` | Wazuh ignored the rule at load time: its `if_sid` parent was not loaded yet (the file name sorts before the parent's file) or does not exist. The manager still starts and `wazuh-analysisd -t` still exits 0; only `ossec.log` shows warnings 7617/7619. Read from `ossec.log` when present, otherwise predicted from the load order. Chains are followed: a rule whose parent was itself dropped is dropped too, however deep. |
+| `DROPPED-AT-LOAD` | Wazuh ignored the rule at load time: its `if_sid` parent was not loaded yet (the file name sorts before the parent's file, or the parent is defined later in the same file), points to the rule itself, or does not exist. The manager still starts and `wazuh-analysisd -t` still exits 0; the only trace is warnings 7617/7619, printed by `-t` and written to `ossec.log`, that nothing fails on. Read from `ossec.log` when present, otherwise predicted from the load order. Chains are followed: a rule whose parent was itself dropped is dropped too, however deep. |
 | `SHADOW-CANDIDATE` | a sibling that Wazuh evaluates first (higher level, or same level and loaded earlier) did fire. **A candidate, not a finding:** it proves the sibling matched something, not that your rule would have matched the same event. |
 | `NEVER-REACHES-MANAGER` | no related rule fired and the manager logged event loss (rules 203/204). Only loss that raised 203/204 is seen: an agent with its client buffer off, or a manager dropping events at its EPS limit, raises neither, and Lite then says `NO-MATCH`. |
 | `NO-MATCH` | a related rule fired but this one did not, or nothing suggests event loss. |

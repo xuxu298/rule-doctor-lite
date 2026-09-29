@@ -22,7 +22,7 @@ order across ruleset/rules and etc/rules, then order inside the file).
 """
 import argparse, glob, gzip, json, os, re, sys, time
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 URL_FULL = "https://vct.atkvn.com/rule-doctor.html"
 CONTACT = "dongnx@atkvn.com"
 
@@ -157,8 +157,13 @@ def static_drops(rules, stock_read, known=None):
                 if p in out or p in known:
                     why.append("parent %s is itself dropped at load" % p)
                 elif p in rules:
-                    if rules[p]["load_order"] > r["load_order"]:
-                        why.append("parent %s is in %s, which loads after %s" % (p, rules[p]["file"], r["file"]))
+                    if p == rid:
+                        why.append("if_sid %s points to the rule itself" % p)
+                    elif rules[p]["load_order"] > r["load_order"]:
+                        if rules[p]["file"] == r["file"]:
+                            why.append("parent %s is defined later in the same file %s" % (p, r["file"]))
+                        else:
+                            why.append("parent %s is in %s, which loads after %s" % (p, rules[p]["file"], r["file"]))
                     else:
                         break  # at least one parent is loaded already: the rule survives
                 elif stock_read:

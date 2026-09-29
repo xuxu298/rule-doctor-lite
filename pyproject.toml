@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rule-doctor-lite"
-version = "0.2.1"
+version = "0.2.2"
 description = "Find custom Wazuh rules that never fire, including rules dropped at load (7617/7619). Read-only, standard library only."
 readme = "README.md"
 license = "Apache-2.0"

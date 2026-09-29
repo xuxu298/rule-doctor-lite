@@ -14,6 +14,8 @@ check "910013 dropped, grandchild (chain)"   "$a" '910013 .*DROPPED-AT-LOAD +pre
 b=$(python3 rule-doctor-lite.py --ossec-dir $F --ossec-log /nonexistent)
 check "910010 predicted from load order"     "$b" '910010 .*predicted: parent 5715 is in 0095-sshd_rules.xml'
 check "chain followed without ossec.log"     "$b" '910013 .*DROPPED-AT-LOAD +predicted: parent 910012 is itself dropped'
+check "forward ref in the same file"         "$b" '910020 .*DROPPED-AT-LOAD +predicted: parent 910021 is defined later in the same file'
+check "if_sid pointing to itself"            "$b" '910022 .*DROPPED-AT-LOAD +predicted: if_sid 910022 points to the rule itself'
 c=$(python3 rule-doctor-lite.py --ossec-dir $F --days 60)
 check "rotated .gz alerts read (--days 60)"    "$c" 'SHADOW-CANDIDATE=2'
 d=$(python3 rule-doctor-lite.py --ossec-dir $F --ossec-log $F/logs/ossec-old-load.log --ossec-log $F/logs/ossec.log)

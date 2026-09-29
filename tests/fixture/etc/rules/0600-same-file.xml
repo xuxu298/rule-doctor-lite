@@ -1,0 +1,5 @@
+<group name="rule-doctor-test,">
+  <rule id="910020" level="10"><if_sid>910021</if_sid><description>EXPECT DROPPED-AT-LOAD (parent defined later in the same file)</description></rule>
+  <rule id="910021" level="3"><match>RDTEST_SAME_FILE</match><description>parent of 910020, loads fine</description></rule>
+  <rule id="910022" level="10"><if_sid>910022</if_sid><description>EXPECT DROPPED-AT-LOAD (if_sid points to itself)</description></rule>
+</group>
