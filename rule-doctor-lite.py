@@ -22,13 +22,18 @@ order across ruleset/rules and etc/rules, then order inside the file).
 """
 import argparse, glob, gzip, json, os, re, sys, time
 
-VERSION = "0.2.2"
+VERSION = "0.2.3"
 URL_FULL = "https://vct.atkvn.com/rule-doctor.html"
 CONTACT = "dongnx@atkvn.com"
 
 BLK = re.compile(r'<rule\b[^>]*\bid="(\d+)"[^>]*>(.*?)</rule>', re.S | re.I)
 LVL = re.compile(r'\blevel="(\d+)"', re.I)
 IFS = re.compile(r'<if_sid>\s*([0-9,\s]+)\s*</if_sid>', re.I)
+# <location> anchored at the start of an absolute path. Measured on Wazuh 4.14.7 with logtest
+# (01/10/2026): an agent that reads host logs through a mount (e.g. /hostfs in a container) reports
+# location /hostfs/var/log/auth.log; <location>/var/log/auth.log</location> still matches (substring),
+# <location>^/var/log/auth.log</location> does not. Idea from Mattias Hemmingsson's wazuh-help docs.
+LOC = re.compile(r'<location\b[^>]*>\s*\^\s*(/[^<]*?)\s*</location>', re.I)
 # measured on Wazuh 4.14.7 (26/09/2026):
 #   WARNING: (7617): Signature ID '5715' was not found and will be ignored in the 'if_sid' option of rule '100080'.
 #   WARNING: (7619): Empty 'if_sid' value. Rule '100080' will be ignored.
@@ -54,9 +59,11 @@ def read_ruleset(stock_dir, custom_dir):
             rid, body = m.group(1), m.group(2)
             lm = LVL.search(m.group(0)[:300])
             im = IFS.search(body)
+            loc = LOC.search(body)
             rules[rid] = {"level": int(lm.group(1)) if lm else None,
                           "parents": [p.strip() for p in im.group(1).split(",") if p.strip()] if im else [],
-                          "file": os.path.basename(f), "load_order": idx, "custom": mine}
+                          "file": os.path.basename(f), "load_order": idx, "custom": mine,
+                          "loc_anchored": loc.group(1) if loc else None}
             idx += 1
             n_stock += 0 if mine else 1
     return rules, n_stock
@@ -266,12 +273,21 @@ def main(argv=None):
     if counts.get(CANDIDATE):
         print("SHADOW-CANDIDATE is not proven yet. The full ATK Rule Doctor replays real events through a")
         print("throwaway manager of your version to confirm or clear each one: " + URL_FULL)
+    anchored = sorted((rid for rid, r in rules.items() if r["custom"] and r["loc_anchored"]), key=int)
+    if anchored:
+        print()
+        print("LOCATION-ANCHORED (not a silence verdict, a risk): these custom rules match <location> from the")
+        print("start of the path. An agent that reads host logs through a mount, e.g. /hostfs in a container,")
+        print("reports /hostfs/var/log/..., and these rules will not match its events. Drop the ^ to be safe.")
+        for rid in anchored:
+            print("  %-8s %-26s location ^%s" % (rid, rules[rid]["file"], rules[rid]["loc_anchored"]))
     if res:
         print("Want it fixed for you? Rule Fix Pack, fixed price, you pay only after the fix fires on your cluster: " + CONTACT)
     if a.json:
         with open(a.json, "w") as fh:
             json.dump({"version": VERSION, "window": [first, last], "event_loss_signal": loss,
-                       "results": {k: {"label": v[0], "why": v[1]} for k, v in res.items()}}, fh, indent=1)
+                       "results": {k: {"label": v[0], "why": v[1]} for k, v in res.items()},
+                       "location_anchored": {k: "^" + rules[k]["loc_anchored"] for k in anchored}}, fh, indent=1)
         print("report written to " + a.json)
 
 

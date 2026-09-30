@@ -1,0 +1,18 @@
+<!-- location anchored at the path start: silent on agents that read logs through /hostfs -->
+<group name="loctest,">
+  <rule id="910031" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="loctest">yes</field>
+    <description>fixture parent for location checks</description>
+  </rule>
+  <rule id="910030" level="5">
+    <if_sid>910031</if_sid>
+    <location>^/var/log/auth.log</location>
+    <description>anchored location</description>
+  </rule>
+  <rule id="910032" level="5">
+    <if_sid>910031</if_sid>
+    <location>/var/log/auth.log</location>
+    <description>unanchored location, not flagged</description>
+  </rule>
+</group>

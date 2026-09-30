@@ -11,6 +11,8 @@ check "910011 dropped, missing parent"       "$a" '910011 .*DROPPED-AT-LOAD +pre
 check "3 shadow candidates"                  "$a" 'SHADOW-CANDIDATE=3'
 check "910012 dropped, child of dropped 910010" "$a" '910012 .*DROPPED-AT-LOAD +predicted: parent 910010 is itself dropped'
 check "910013 dropped, grandchild (chain)"   "$a" '910013 .*DROPPED-AT-LOAD +predicted: parent 910012 is itself dropped'
+check "anchored <location> flagged"        "$a" '910030 +0700-location.xml +location \^/var/log/auth.log'
+if printf '%s\n' "$a" | grep -Eq '^  910032 .*location \^'; then echo "FAIL unanchored location not flagged"; fail=1; else echo "PASS unanchored location not flagged"; fi
 b=$(python3 rule-doctor-lite.py --ossec-dir $F --ossec-log /nonexistent)
 check "910010 predicted from load order"     "$b" '910010 .*predicted: parent 5715 is in 0095-sshd_rules.xml'
 check "chain followed without ossec.log"     "$b" '910013 .*DROPPED-AT-LOAD +predicted: parent 910012 is itself dropped'
