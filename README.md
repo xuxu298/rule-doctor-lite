@@ -36,7 +36,7 @@ docker cp $C:/var/ossec/logs/ossec.log copy/logs/ && docker cp $C:/var/ossec/log
 
 The shadowed / never-reaches-the-manager / no-match split is Kislley Rodrigues's.
 
-**`LOCATION-ANCHORED`** (0.2.3) is a separate list, not a silence label: custom rules whose `<location>` is anchored at the start of a path, like `^/var/log/auth.log`. An agent that reads host logs through a mount, for example `/hostfs` in a containerised agent, reports `location` as `/hostfs/var/log/auth.log`. Measured on Wazuh 4.14.7 with `wazuh-logtest`: `<location>/var/log/auth.log</location>` still fires (it is a substring match), `<location>^/var/log/auth.log</location>` does not. Not yet measured with a live containerised agent. The idea comes from Mattias Hemmingsson's [wazuh-help](https://github.com/samma-io/wazuh-help) notes on running agents in containers.
+**`LOCATION-ANCHORED`** (0.2.3) is a separate list, not a silence label: custom rules whose `<location>` is anchored at the start of a path, like `^/var/log/auth.log`. An agent that reads host logs through a mount, for example `/hostfs` in a containerised agent, reports `location` as `/hostfs/var/log/auth.log`. Measured on Wazuh 4.14.7, first with `wazuh-logtest` and then with a live `wazuh/wazuh-agent:4.14.7` container reading `/hostfs/var/log/auth.log`: `<location>/var/log/auth.log</location>` still fires (it is a substring match), `<location>^/var/log/auth.log</location>` does not. The idea comes from Mattias Hemmingsson's [wazuh-help](https://github.com/samma-io/wazuh-help) notes on running agents in containers.
 
 Every result is printed with the time window it was measured over. A rule written for a quarterly event is not dead after a day.
 
