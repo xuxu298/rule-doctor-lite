@@ -90,8 +90,8 @@ Step-by-step notes for what Lite points at, each with a one-minute check you can
 
 ## Full version and done-for-you fixes
 
-- **Silent Rule Review** (USD 49, refunded if it finds nothing): send the `--json` report and your custom rule files, and within one business day you get a written note on every silent rule, why it does not fire and what to change: https://vct.atkvn.com/rule-doctor.html?src=gh#review
+- **Free 24-hour answer**: email the `--json` report, your custom rule files and your Wazuh version to support@atkvn.com, and within 24 hours you get a note on every silent rule and why it does not fire.
 - **ATK Rule Doctor** (USD 490 per cluster per year) replays the real events behind every `SHADOW-CANDIDATE` through a throwaway manager of your version to confirm or clear it, and fixes alerts the indexer rejects with `mapper_parsing_exception`: https://vct.atkvn.com/rule-doctor.html
-- **Rule Fix Pack**: we fix a silent rule or a mapping conflict on your version, fixed price, and you pay only after the fix fires on your cluster. Write to dongnx@atkvn.com.
+- **Wazuh Fix**: we fix a silent rule or a mapping conflict on your version, USD 149 per problem (USD 490 for indexer or deployment work), and you pay only after the fix fires on your cluster: https://vct.atkvn.com/rule-doctor.html?src=gh
 
 Licence: Apache-2.0. Made by ATK New Technology, Hanoi.
