@@ -77,6 +77,16 @@ The prediction matters because `ossec.log` can miss warnings: analysisd buffers 
 - `SHADOW-CANDIDATE` needs a replay to confirm or clear. Lite does not replay.
 - "Never fired" means never fired in the alerts it read (7 days by default). Older alerts need `--days` or `--alerts`.
 
+## Run checks from your AI agent
+
+The same team runs a free MCP server at `https://atkvn.com/agent/mcp` (no sign-up; listed in the MCP Registry as `com.atkvn/security-checks`). Add it to Claude, Cursor or any MCP client and your agent can:
+
+- `test_wazuh_rule`: run your rules and decoders against your log lines on a real wazuh-manager 4.14.9 and see which rule fired, or why yours did not.
+- `audit_wazuh_rules`: find rules that pass `wazuh-analysisd -t` but are dropped at load (file order, missing parents, colliding ids).
+- `check_php2shell`: patched or not for CVE-2026-109618/109619, from `php -v`, `php -i` and package output it collects on your server. Detection rules for the crash and out-of-memory signals: [PHP2Shell note](https://atkvn.com/fix-wazuh-php2shell-crash-and-oom-signals.html?src=gh).
+
+Details and limits: https://atkvn.com/agent/
+
 ## Guides
 
 Step-by-step notes for what Lite points at, each with a one-minute check you can run yourself (measured on Wazuh 4.14.7):
@@ -87,6 +97,7 @@ Step-by-step notes for what Lite points at, each with a one-minute check you can
 - [mapper_parsing_exception: the alert is in alerts.json but never reaches the dashboard](https://atkvn.com/fix-mapper-parsing-exception.html?src=gh)
 - [Wazuh "Cannot read 'srcip' from data"](https://atkvn.com/fix-cannot-read-srcip-from-data.html?src=gh)
 - [Wazuh rule with `<hostname>` matches in logtest but never fires for agent events](https://atkvn.com/fix-hostname-rule-never-fires-for-agent-events.html?src=gh)
+- [PHP2Shell: stock Wazuh does not alert on PHP-FPM crashes or out-of-memory floods](https://atkvn.com/fix-wazuh-php2shell-crash-and-oom-signals.html?src=gh) (4.14.9)
 
 ## Full version and done-for-you fixes
 
